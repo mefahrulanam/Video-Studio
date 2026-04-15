@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Dancing+Script:wght@600;700&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fff1f2;
+        }
+
+        .tab-active {
+            color: #dc2626;
+            border-bottom: 3px solid #dc2626;
+        }
+
+        .red-glow {
+            box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.2);
+        }
+
+        .loading-spinner {
+            border: 3px solid #fecaca;
+            border-top: 3px solid #dc2626;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .red-gradient-btn {
+            background: linear-gradient(135deg, #dc2626, #991b1b);
+        }
+
+        .red-gradient-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        /* Gaya Font Tanda Tangan */
+        .signature {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #dc2626, #7f1d1d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <div class="max-w-xl mx-auto p-4">
+        <!-- Header -->
+        <header class="text-center mt-8 mb-10">
+            <h1 class="text-3xl font-extrabold text-slate-900 flex items-center justify-center gap-3">
+                <i class="fas fa-wand-magic-sparkles text-red-600"></i>
+                AI Video Studio
+            </h1>
+            <p class="text-slate-500 text-sm font-medium mt-1">Optimasi Video Kualitas Tinggi</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-red-100 mb-8 bg-white rounded-t-2xl shadow-sm overflow-hidden">
+            <button id="tabEnhance" class="flex-1 px-4 py-5 text-xs font-bold tab-active transition-all">
+                <i class="fas fa-sparkles mr-1"></i> CLARITY
+            </button>
+            <button id="tabTikTok" class="flex-1 px-4 py-5 text-xs font-bold text-slate-400 hover:text-red-400 transition-all">
+                <i class="fab fa-tiktok mr-1"></i> TIKTOK
+            </button>
+        </div>
+
+        <!-- Section 1: Video Enhancer (Clarity) -->
+        <div id="sectionEnhance" class="space-y-6">
+            <div id="dropZone" class="border-2 border-dashed border-red-200 rounded-3xl p-10 text-center bg-white hover:border-red-500 cursor-pointer transition-all group">
+                <input type="file" id="videoInput" class="hidden" accept="video/*">
+                <div id="uploadUI">
+                    <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-cloud-arrow-up text-2xl"></i>
+                    </div>
+                    <p class="font-bold text-slate-800">Pilih Video</p>
+                    <p class="text-xs text-slate-400 mt-2">Format MP4/MOV untuk hasil terbaik</p>
+                </div>
+                <div id="fileUI" class="hidden">
+                    <div class="flex items-center justify-center gap-2 text-red-600 mb-3">
+                        <i class="fas fa-file-video text-xl"></i>
+                        <p id="fileName" class="font-bold truncate max-w-[200px]"></p>
+                    </div>
+                    <button onclick="resetUpload(event)" class="text-xs text-slate-400 font-bold uppercase hover:text-red-600 transition-colors">Ganti File</button>
+                </div>
+            </div>
+            
+            <button id="btnProcess" disabled class="w-full bg-slate-200 text-slate-400 font-bold py-5 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3">
+                <span id="btnProcessText">JERNIHKAN VIDEO SEKARANG</span>
+                <div id="btnProcessLoading" class="hidden loading-spinner"></div>
+            </button>
+        </div>
+
+        <!-- Section 2: TikTok Downloader -->
+        <div id="sectionTikTok" class="hidden space-y-6">
+            <div class="bg-white p-8 rounded-3xl border border-red-100 shadow-sm">
+                <label class="block text-xs font-bold text-red-800 mb-4 uppercase tracking-widest text-center">Tempel Link Video TikTok</label>
+                <div class="relative">
+                    <input type="text" id="tiktokUrl" placeholder="https://www.tiktok.com/@user/video/..." class="w-full p-5 pr-14 bg-red-50/30 border border-red-100 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none transition-all text-sm">
+                    <i class="fab fa-tiktok absolute right-5 top-1/2 -translate-y-1/2 text-red-300"></i>
+                </div>
+            </div>
+            <button id="btnTikTok" class="w-full red-gradient-btn text-white font-bold py-5 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 hover:opacity-90 active:scale-[0.98]">
+                <span id="btnTikTokText">UNDUH TANPA WATERMARK</span>
+                <div id="btnTikTokLoading" class="hidden loading-spinner"></div>
+            </button>
+        </div>
+
+        <!-- Progress Area -->
+        <div id="progressArea" class="hidden mt-10 p-8 bg-white rounded-3xl border border-red-100 red-glow">
+            <div class="flex justify-between items-end mb-5">
+                <div class="space-y-1">
+                    <p id="statusLabel" class="text-sm font-bold text-red-900">Menyiapkan AI Engine...</p>
+                    <p class="text-[10px] text-red-400 uppercase tracking-widest font-bold">Processing status</p>
+                </div>
+                <span id="percentLabel" class="text-2xl font-black text-red-600">0%</span>
+            </div>
+            <div class="w-full bg-red-50 h-3 rounded-full overflow-hidden">
+                <div id="barLabel" class="bg-red-600 h-full w-0 transition-all duration-300"></div>
+            </div>
+        </div>
+
+        <!-- Result Area -->
+        <div id="resultArea" class="hidden mt-10 space-y-5 animate-in fade-in zoom-in duration-500">
+            <div class="bg-slate-900 p-2 rounded-3xl overflow-hidden shadow-2xl border-4 border-white red-glow">
+                <video id="finalVideo" controls playsinline class="w-full rounded-2xl"></video>
+            </div>
+            
+            <a id="downloadBtn" target="_blank" rel="noopener noreferrer" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 shadow-xl transition-all border-b-4 border-red-800 active:border-b-0 active:translate-y-1">
+                <i class="fas fa-download"></i>
+                <span>SIMPAN KE GALERI</span>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-16 text-center border-t border-red-100 pt-8">
+            <p class="text-red-300 text-[10px] font-bold uppercase tracking-[0.4em] mb-1">Developed By</p>
+            <p class="signature">fahrul anam</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const tabs = {
+            enhance: document.getElementById('tabEnhance'),
+            tiktok: document.getElementById('tabTikTok')
+        };
+        const sections = {
+            enhance: document.getElementById('sectionEnhance'),
+            tiktok: document.getElementById('sectionTikTok')
+        };
+        
+        const videoInput = document.getElementById('videoInput');
+        const dropZone = document.getElementById('dropZone');
+        const btnProcess = document.getElementById('btnProcess');
+        const btnTikTok = document.getElementById('btnTikTok');
+        
+        const progressArea = document.getElementById('progressArea');
+        const resultArea = document.getElementById('resultArea');
+        const finalVideo = document.getElementById('finalVideo');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let selectedFile = null;
+
+        // Navigation Logic
+        function switchTab(active) {
+            Object.keys(tabs).forEach(key => {
+                const isActive = (key === active);
+                tabs[key].classList.toggle('tab-active', isActive);
+                tabs[key].classList.toggle('text-slate-400', !isActive);
+                sections[key].classList.toggle('hidden', !isActive);
+            });
+            resetUI();
+        }
+
+        tabs.enhance.onclick = () => switchTab('enhance');
+        tabs.tiktok.onclick = () => switchTab('tiktok');
+
+        // File Selection Logic
+        dropZone.onclick = () => videoInput.click();
+        videoInput.onchange = (e) => {
+            if(e.target.files[0]) {
+                selectedFile = e.target.files[0];
+                document.getElementById('uploadUI').classList.add('hidden');
+                document.getElementById('fileUI').classList.remove('hidden');
+                document.getElementById('fileName').innerText = selectedFile.name;
+                
+                btnProcess.disabled = false;
+                btnProcess.classList.remove('bg-slate-200', 'text-slate-400');
+                btnProcess.classList.add('red-gradient-btn', 'text-white');
+            }
+        };
+
+        function resetUpload(e) {
+            e.stopPropagation();
+            videoInput.value = '';
+            selectedFile = null;
+            document.getElementById('uploadUI').classList.remove('hidden');
+            document.getElementById('fileUI').classList.add('hidden');
+            btnProcess.disabled = true;
+            btnProcess.classList.add('bg-slate-200', 'text-slate-400');
+            btnProcess.classList.remove('red-gradient-btn', 'text-white');
+            resetUI();
+        }
+
+        // Processing Simulation
+        function runProcess(statusText, callback) {
+            progressArea.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+            document.getElementById('statusLabel').innerText = statusText;
+            
+            let p = 0;
+            const timer = setInterval(() => {
+                p += Math.random() * 12;
+                if(p >= 100) {
+                    p = 100;
+                    clearInterval(timer);
+                    setTimeout(callback, 500);
+                }
+                document.getElementById('barLabel').style.width = p + '%';
+                document.getElementById('percentLabel').innerText = Math.round(p) + '%';
+            }, 200);
+        }
+
+        // Feature 1: Clarity
+        btnProcess.onclick = () => {
+            btnProcess.disabled = true;
+            document.getElementById('btnProcessLoading').classList.remove('hidden');
+            
+            runProcess("AI sedang menjernihkan video...", () => {
+                const url = URL.createObjectURL(selectedFile);
+                showResult(url, "Clean_" + selectedFile.name);
+                btnProcess.disabled = false;
+                document.getElementById('btnProcessLoading').classList.add('hidden');
+            });
+        };
+
+        // Feature 2: TikTok Downloader
+        btnTikTok.onclick = async () => {
+            const url = document.getElementById('tiktokUrl').value.trim();
+            if(!url.includes('tiktok.com')) return alert('Link TikTok tidak valid!');
+            
+            btnTikTok.disabled = true;
+            document.getElementById('btnTikTokLoading').classList.remove('hidden');
+            
+            try {
+                const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
+                const json = await res.json();
+                
+                if(json.code === 0) {
+                    runProcess("Mengambil video tanpa watermark...", () => {
+                        showResult(json.data.play, "TikTok_NoWM.mp4");
+                        btnTikTok.disabled = false;
+                        document.getElementById('btnTikTokLoading').classList.add('hidden');
+                    });
+                } else {
+                    alert("Video tidak ditemukan.");
+                    btnTikTok.disabled = false;
+                    document.getElementById('btnTikTokLoading').classList.add('hidden');
+                }
+            } catch (e) {
+                alert("Gagal terhubung.");
+                btnTikTok.disabled = false;
+                document.getElementById('btnTikTokLoading').classList.add('hidden');
+            }
+        };
+
+        function showResult(url, name) {
+            progressArea.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+            finalVideo.src = url;
+            downloadBtn.href = url;
+            downloadBtn.setAttribute('download', name);
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetUI() {
+            progressArea.classList.add('hidden');
+            resultArea.classList.add('hidden');
+            document.getElementById('barLabel').style.width = '0%';
+            document.getElementById('percentLabel').innerText = '0%';
+        }
+    </script>
+</body>
+</html>
